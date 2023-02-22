@@ -1,0 +1,37 @@
+<script language="javascript">
+    ssid = "[SSID unknown]";
+    quality = "0%";
+
+    ssidExpr = /Capture\(share.ssid\)<\/script><\/div>\n(.*)&nbsp;/;
+    qualityExpr = /setWirelessTable\('..:..:..:..:..:..','.*?','.*?','.*?','-[0-9]+','-[0-9]+','[0-9]+','([0-9]+)'/;
+
+    raw_quality = 0;
+
+    function updateTitle() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "http://dd-wrt/", false);
+        xhr.send(null);
+
+        ssid = xhr.responseText.match(ssidExpr)[1];
+        raw_quality = xhr.responseText.match(qualityExpr)[1];
+        quality = Math.floor(raw_quality / 10) + "%";
+
+        p = raw_quality / 1000;
+
+        var color = [Math.floor(255 * (1 - p)), Math.floor(180 * p), 0, 
+        180];
+
+        title = ssid + ", " + quality
+        chrome.browserAction.setTitle({"title": title});
+        chrome.browserAction.setBadgeBackgroundColor({"color": color});
+        chrome.browserAction.setBadgeText({"text": quality});
+    }
+
+    updateTitle();
+    setInterval(function() { updateTitle(); }, 10000);
+    chrome.browserAction.onClicked.addListener(function(tab) { goToRouter(); });
+
+    function goToRouter() {
+        chrome.tabs.create({url: "http://dd-wrt/"});
+    }
+</script>
